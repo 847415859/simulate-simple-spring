@@ -11,7 +11,7 @@ import org.w3c.dom.ls.LSOutput;
  * @Date : 2023/03/24 15:43
  * @Auther : tiankun
  */
-@Component("userService")
+@Component
 @Scope("singleton")
 public class UserService implements InitializingBean,UserServiceInterface {
 

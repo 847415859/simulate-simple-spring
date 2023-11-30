@@ -7,10 +7,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.*;
 
 /**
  * @Description:
@@ -56,9 +55,12 @@ public class ApplicationContext {
             String scanPath = componentScan.value();
             // 根据扫描路径找类上带有 @Component 注解的类
             log.info("scan path :{}",scanPath);
+            // 获取到target/classes文件目录
+            // file:/D:/Studynotes/self-study/ssjava/3.SSM%20&&%20Springboot/02.spring/SourceCode/simulate-simple-spring/simple-spring/target/classes/
             URL url = this.getClass().getResource("/");
             String replacePath = scanPath.replaceAll("\\.", "/");
-            File file = new File(url.getFile(), replacePath);
+            // URLDecoder.decode,避免文件路径被URL编码，需要进行URL解码
+            File file = new File(URLDecoder.decode(url.getFile()), replacePath);
             if(file.isDirectory()){
                 for (String fileName : file.list()) {
                     String filePath = scanPath + "." + fileName.substring(0,fileName.lastIndexOf(".class"));
@@ -73,6 +75,9 @@ public class ApplicationContext {
                                 Component component = clazz.getDeclaredAnnotation(Component.class);
                                 BeanDefinition beanDefinition = new BeanDefinition();
                                 String beanName = component.value();
+                                if(Objects.isNull(beanName) || Objects.equals(beanName.trim(), "")){
+                                    beanName = getBeanNameByClazz(clazz);
+                                }
                                 boolean lazy = component.lazy();
                                 Scope scopeAnno = clazz.getAnnotation(Scope.class);
                                 String scopeValue = "singleton";
@@ -95,6 +100,26 @@ public class ApplicationContext {
             }
         }
         log.info("bean defination map :{}",beanDefinitionMape);
+    }
+
+    /**
+     * 根据类获取Bean名称
+     * @param clazz
+     * @return
+     */
+    private String getBeanNameByClazz(Class<?> clazz) {
+        String beanName;
+        String clazzName = clazz.getName();
+        int beginIndex = clazzName.lastIndexOf(".");
+        if(beginIndex > -1) {
+            clazzName = clazzName.substring(beginIndex + 1);
+        }
+        if (clazzName.length() == 1){
+            beanName = clazzName.toLowerCase();
+        }else {
+            beanName = clazzName.substring(0,1).toLowerCase() + clazzName.substring(1);
+        }
+        return beanName;
     }
 
     public Object getBean(String userService) {
@@ -144,6 +169,7 @@ public class ApplicationContext {
                 }
             }
 
+            // Bean的后置处理器
             for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
                 instance = beanPostProcessor.postProcessAfterInitialization(instance,beanName);
             }

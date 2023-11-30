@@ -9,4 +9,5 @@ import com.spring.ComponentScan;
  */
 @ComponentScan(value = "com.tk.service")
 public class AppConfig {
+
 }
